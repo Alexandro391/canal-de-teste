@@ -209,75 +209,10 @@
   }
   #toast.show{transform:translateX(-50%) translateY(0);}
 
-  /* ── QUADRO DE CHAMADOS (colunas por status + quadrados coloridos por categoria) ── */
-  .board{max-width:640px;margin:18px auto 0;padding:0 18px;display:grid;grid-template-columns:1fr;gap:16px;}
-  .coluna{background:rgba(255,255,255,.7);border:1px solid var(--neutral-100);border-radius:16px;padding:12px;}
-  .coluna-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;}
-  .coluna-titulo{font-size:13px;font-weight:800;letter-spacing:0.2px;color:var(--neutral-700);}
-  .coluna-count{background:var(--primary-700);color:#fff;font-size:11.5px;font-weight:800;border-radius:100px;padding:2px 10px;min-width:22px;text-align:center;}
-  .coluna-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
-  .coluna-vazia{grid-column:1/-1;text-align:center;font-size:12px;color:var(--neutral-500);padding:10px 0;}
-
-  .quadrado{
-    position:relative;aspect-ratio:1/1;border-radius:12px;color:#fff;
-    display:flex;flex-direction:column;justify-content:space-between;padding:8px 9px;
-    cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);
-    transition:transform .12s ease, box-shadow .12s ease;
-  }
-  .quadrado:active{transform:scale(0.96);}
-  .quadrado .qz-urg{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.55);}
-  .quadrado .qz-proto{font-size:9.5px;font-weight:700;opacity:.85;font-family:'JetBrains Mono',monospace;}
-  .quadrado .qz-sala{font-size:12.5px;font-weight:800;line-height:1.2;word-break:break-word;}
-  .quadrado .qz-tempo{font-size:9.5px;font-weight:600;opacity:.9;}
-  .quadrado.novo{animation:novoPulseQz 1.8s ease 3;}
-  @keyframes novoPulseQz{0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.18);}50%{box-shadow:0 0 0 7px rgba(255,255,255,.35);}}
-
-  /* legenda de cores por categoria */
-  .legenda{max-width:640px;margin:14px auto 0;padding:0 18px;display:flex;flex-wrap:wrap;gap:8px;}
-  .legenda-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--neutral-700);
-    background:rgba(255,255,255,.7);border:1px solid var(--neutral-100);border-radius:100px;padding:4px 10px;}
-  .legenda-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
-
-  /* modal de detalhes do chamado (abre ao clicar no quadrado) */
-  .modal-overlay{
-    position:fixed;inset:0;background:rgba(11,23,21,.55);
-    display:none;align-items:center;justify-content:center;z-index:300;padding:20px;
-  }
-  .modal-overlay.aberto{display:flex;}
-  .modal-box{
-    background:var(--white);border-radius:18px;max-width:420px;width:100%;
-    max-height:88vh;overflow-y:auto;padding:24px 22px 20px;position:relative;box-shadow:var(--shadow-lg);
-  }
-  .modal-fechar{
-    position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:10px;
-    border:none;background:var(--neutral-100);font-size:15px;cursor:pointer;color:var(--neutral-700);
-  }
-  .modal-tag{display:inline-block;font-size:11px;font-weight:800;color:#fff;padding:4px 11px;border-radius:100px;margin-bottom:10px;}
-  .modal-box h2{font-size:17px;margin:0 0 14px;color:var(--neutral-900);padding-right:30px;}
-  .modal-info-row{display:flex;gap:8px;padding:9px 0;border-bottom:1px solid var(--neutral-100);font-size:13.5px;}
-  .modal-info-row .lbl{font-weight:700;color:var(--neutral-700);min-width:100px;flex-shrink:0;}
-  .modal-info-row .val{color:var(--neutral-900);word-break:break-word;}
-  .modal-info-row a.val{color:var(--primary-600);font-weight:600;text-decoration:none;}
-  .modal-acoes{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
-  .modal-acoes .btn-call{text-decoration:none;padding:11px 14px;}
-
-  body.dark-mode .coluna{background:#0f2523;border-color:rgba(255,255,255,.08);}
-  body.dark-mode .coluna-titulo{color:#eafffb;}
-  body.dark-mode .coluna-vazia{color:#93a6a3;}
-  body.dark-mode .legenda-item{background:#0f2523;border-color:rgba(255,255,255,.08);color:#c7d8d5;}
-  body.dark-mode .modal-box{background:#0b1e1c;color:#eafffb;}
-  body.dark-mode .modal-box h2{color:#eafffb;}
-  body.dark-mode .modal-info-row{border-color:rgba(255,255,255,.08);}
-  body.dark-mode .modal-info-row .lbl{color:#eafffb;}
-  body.dark-mode .modal-info-row .val{color:#c7d8d5;}
-  body.dark-mode .modal-fechar{background:rgba(255,255,255,.1);color:#eafffb;}
-
   /* ── TELAS GRANDES (desktop / TV) — ocupa a largura inteira em grid ── */
   @media (min-width: 900px){
-    .topbar-inner, .summary, .lista, .footer, .board, .legenda{ max-width:100%; padding-left:36px; padding-right:36px; }
+    .topbar-inner, .summary, .lista, .footer{ max-width:100%; padding-left:36px; padding-right:36px; }
     .lista{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 380px)); gap:18px 20px; justify-content:start; align-items:start; }
-    .board{ grid-template-columns:repeat(3,1fr); gap:20px; align-items:start; }
-    .coluna-grid{ grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
     .card{ padding:18px 20px; }
     .summary-card{ padding:24px 34px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px 32px; }
     .summary-stats{ gap:32px; }
@@ -292,10 +227,6 @@
   @media (min-width: 1400px){
     body{ font-size:16px; }
     .lista{ grid-template-columns:repeat(auto-fill, minmax(400px, 460px)); gap:22px; }
-    .coluna-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px; }
-    .quadrado .qz-sala{ font-size:15px; }
-    .quadrado .qz-proto, .quadrado .qz-tempo{ font-size:11.5px; }
-    .modal-box{ max-width:480px; padding:30px 28px 24px; }
     .summary-count{ font-size:60px; }
     .stat.secundario .summary-count{ font-size:42px; }
     .sala{ font-size:24px; }
@@ -781,6 +712,64 @@
   body.dark-mode .footer a{color:#7fe8dd;}
   body.dark-mode #toast{background:rgba(11,17,32,.96);}
 
+  /* ═══════════════════════════════════════════════════════════
+     AJUSTE 5 — reduz fonte geral do painel e os botões do topo
+     (somente aparência; nenhuma lógica/comportamento foi alterada)
+     ═══════════════════════════════════════════════════════════ */
+
+  /* Botões do topo (topbar) menores */
+  .icon-btn{width:34px;height:34px;border-radius:10px;font-size:15px;}
+  .brand-mark{width:42px;height:42px;border-radius:12px;}
+  .brand-mark svg{width:22px;height:22px;}
+
+  /* Fontes gerais menores */
+  .brand-title{font-size:15px;}
+  .brand-sub{font-size:11px;}
+  .summary-count{font-size:44px;}
+  .stat.secundario .summary-count{font-size:32px;}
+  .summary-label{font-size:11px;}
+  .chip{font-size:12px;padding:7px 12px;}
+  .proto{font-size:12px;padding:4px 10px;}
+  .tempo{font-size:12px;}
+  .sala{font-size:22px;}
+  .badge-urg{font-size:10.5px;padding:4px 9px;}
+  .categoria{font-size:13px;}
+  .info-row{font-size:13px;}
+  .info-row .lbl{font-size:12.5px;min-width:88px;}
+  .status-pill{font-size:10.5px;padding:4px 9px;}
+  .btn{font-size:14px;min-height:46px;}
+  .btn-feito{font-size:14px;min-height:46px;}
+  .btn-call{width:46px;font-size:16px;}
+  .btn-excluir{font-size:11px;}
+  .empty-title{font-size:18px;}
+  .empty-sub{font-size:13px;}
+  .footer{font-size:11px;}
+  #toast{font-size:13px;padding:12px 20px;}
+
+  /* Somente celular: reduz um pouco mais (proporcional) */
+  @media (max-width:560px){
+    .icon-btn{width:30px;height:30px;border-radius:9px;font-size:13px;}
+    .brand-mark{width:34px;height:34px;}
+    .brand-mark svg{width:18px;height:18px;}
+    .brand-title{font-size:12.5px;}
+    .brand-sub{font-size:9.5px;}
+    .summary-count{font-size:34px;}
+    .stat.secundario .summary-count{font-size:24px;}
+    .summary-label{font-size:9px;}
+    .chip{font-size:10.5px;padding:5px 9px;}
+    .proto{font-size:11px;padding:4px 8px;}
+    .tempo{font-size:11px;}
+    .sala{font-size:17px;}
+    .badge-urg{font-size:9px;padding:3px 8px;}
+    .categoria{font-size:12px;}
+    .info-row{font-size:12px;}
+    .info-row .lbl{font-size:11.5px;min-width:74px;}
+    .status-pill{font-size:9px;padding:3px 8px;}
+    .btn{font-size:12.5px;min-height:42px;}
+    .btn-feito{font-size:12.5px;min-height:42px;}
+    .btn-call{width:40px;font-size:15px;}
+    .btn-excluir{font-size:10px;}
+  }
 </style>
 </head>
 <body>
@@ -843,32 +832,12 @@
   </div>
 </div>
 
-<div class="legenda" id="legenda"></div>
-
-<div class="board" id="board">
-  <div class="coluna" data-status="Pendente">
-    <div class="coluna-head"><span class="coluna-titulo">🟡 Pendente</span><span class="coluna-count" id="colCountPendente">0</span></div>
-    <div class="coluna-grid" id="gridPendente"></div>
-  </div>
-  <div class="coluna" data-status="Em atendimento">
-    <div class="coluna-head"><span class="coluna-titulo">🔧 Em atendimento</span><span class="coluna-count" id="colCountAtendimento">0</span></div>
-    <div class="coluna-grid" id="gridAtendimento"></div>
-  </div>
-  <div class="coluna" data-status="Concluído">
-    <div class="coluna-head"><span class="coluna-titulo">✅ Concluído</span><span class="coluna-count" id="colCountConcluido">0</span></div>
-    <div class="coluna-grid" id="gridConcluido"></div>
-  </div>
-</div>
+<div class="lista" id="lista"></div>
 
 <div class="empty" id="empty" style="display:none;">
   <div class="empty-icon">🎉</div>
   <div class="empty-title">Nenhum chamado pendente</div>
   <div class="empty-sub">Tudo em dia. O painel continua monitorando em tempo real.</div>
-</div>
-
-<!-- Modal com todos os detalhes do chamado, aberto ao clicar em um quadrado -->
-<div class="modal-overlay" id="modalOverlay" onclick="fecharModalSeFundo(event)">
-  <div class="modal-box" id="modalBox"></div>
 </div>
 
 <div class="footer">
