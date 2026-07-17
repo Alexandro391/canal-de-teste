@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sistema Integrado · CAP Digital FMC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-950:#081615;
+    --bg-900:#0b2b2a;
+    --bg-800:#123a37;
+    --panel:#0f2f2c;
+    --panel-soft:#143e3a;
+    --line:rgba(139,212,206,.14);
+    --line-strong:rgba(139,212,206,.24);
+    --primary-300:#8bd4ce;
+    --primary-400:#5bb8b0;
+    --primary-500:#3a9a92;
+    --primary-600:#2a7a73;
+    --text-hi:#eaf6f4;
+    --text-mid:#a9c9c5;
+    --text-dim:#5f8783;
+    --glow:0 0 0 1px rgba(91,184,176,.18), 0 0 24px rgba(58,154,146,.22);
+    --glow-strong:0 0 0 1px rgba(91,184,176,.35), 0 0 32px rgba(58,154,146,.4);
+    --red:#e5544a; --amber:#e0a940; --green:#4ec97f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(58,154,146,.10), transparent 45%),
+      radial-gradient(circle at 88% 92%, rgba(91,184,176,.08), transparent 40%),
+      var(--bg-950);
+    color:var(--text-hi);
+    min-height:100vh;
+    display:flex;
+    overflow:hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar{
+    width:272px; flex-shrink:0;
+    background:linear-gradient(180deg, var(--bg-900), var(--bg-950));
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column;
+    height:100vh;
+  }
+  .brand{
+    padding:26px 22px 20px;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:12px;
+  }
+  .brand .mark{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,var(--primary-500),var(--primary-300));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:15px;color:var(--bg-950);
+    box-shadow:var(--glow);
+    flex-shrink:0;
+  }
+  .brand .txt h1{font-size:14.5px;font-weight:800;letter-spacing:.2px;line-height:1.25;}
+  .brand .txt span{font-size:11px;color:var(--text-dim);font-weight:500;letter-spacing:.3px;text-transform:uppercase;}
+
+  .nav{flex:1;overflow-y:auto;padding:18px 14px;}
+  .nav-label{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);padding:6px 10px 10px;}
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 12px; border-radius:12px;
+    cursor:pointer; position:relative;
+    border:1px solid transparent;
+    margin-bottom:6px;
+    transition:background .18s ease, border-color .18s ease, transform .12s ease;
+  }
+  .nav-item:hover{background:rgba(139,212,206,.06);}
+  .nav-item.active{
+    background:rgba(58,154,146,.14);
+    border-color:var(--line-strong);
+    box-shadow:var(--glow);
+  }
+  .nav-item .ico{
+    width:36px;height:36px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--line);
+  }
+  .nav-item.active .ico{background:rgba(58,154,146,.22);border-color:var(--line-strong);}
+  .nav-item .meta{min-width:0;}
+  .nav-item .meta .t{font-size:13.5px;font-weight:700;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nav-item .meta .s{font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nav-item .dot{
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:7px;height:7px;border-radius:50%;background:var(--primary-400);
+    box-shadow:0 0 8px rgba(91,184,176,.9);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+
+  .sidebar-foot{
+    padding:16px 22px 20px; border-top:1px solid var(--line);
+    font-size:10.5px; color:var(--text-dim); line-height:1.6;
+  }
+  .sidebar-foot b{color:var(--text-mid);}
+
+  /* ── MAIN ── */
+  .main{flex:1; display:flex; flex-direction:column; height:100vh; min-width:0;}
+  .topbar{
+    height:60px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 22px; border-bottom:1px solid var(--line);
+    background:rgba(11,43,42,.5); backdrop-filter:blur(6px);
+  }
+  .topbar .title{display:flex;align-items:center;gap:10px;}
+  .topbar .title .ico{font-size:18px;}
+  .topbar .title h2{font-size:15px;font-weight:700;}
+  .topbar .title small{display:block;font-size:11px;color:var(--text-dim);font-weight:500;}
+  .topbar .actions{display:flex; align-items:center; gap:8px;}
+  .tbtn{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.04); border:1px solid var(--line);
+    color:var(--text-mid); font-size:12px; font-weight:600;
+    padding:8px 12px; border-radius:9px; cursor:pointer; text-decoration:none;
+    transition:all .15s ease;
+  }
+  .tbtn:hover{background:rgba(139,212,206,.1); color:var(--text-hi); border-color:var(--line-strong);}
+  .clock{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim); letter-spacing:.5px;}
+
+  .viewport{flex:1; position:relative; background:var(--bg-950); overflow:hidden;}
+  .pane{
+    position:absolute; inset:0; display:none;
+    opacity:0; transition:opacity .22s ease;
+  }
+  .pane.show{display:block; opacity:1;}
+  .pane iframe{width:100%; height:100%; border:0; background:#fff;}
+
+  .loader{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    background:var(--bg-950); z-index:2;
+  }
+  .loader .spin{
+    width:38px;height:38px;border-radius:50%;
+    border:3px solid rgba(91,184,176,.18); border-top-color:var(--primary-400);
+    animation:spin .8s linear infinite;
+  }
+  .loader span{font-size:12.5px; color:var(--text-dim); font-weight:500;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── SHEETS PANE ── */
+  .sheets-wrap{
+    height:100%; display:flex; align-items:center; justify-content:center; padding:40px;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(58,154,146,.08), transparent 50%),
+      var(--bg-950);
+  }
+  .sheets-card{
+    max-width:520px; width:100%;
+    background:linear-gradient(180deg, var(--panel-soft), var(--panel));
+    border:1px solid var(--line-strong); border-radius:20px;
+    padding:36px 34px; text-align:center;
+    box-shadow:var(--glow);
+  }
+  .sheets-card .big-ico{
+    width:64px;height:64px;border-radius:16px; margin:0 auto 18px;
+    background:linear-gradient(135deg,#1a7f4f,#2fbf76);
+    display:flex;align-items:center;justify-content:center;font-size:28px;
+    box-shadow:0 0 30px rgba(47,191,118,.35);
+  }
+  .sheets-card h3{font-size:18px;font-weight:800;margin-bottom:8px;}
+  .sheets-card p{font-size:13px;color:var(--text-mid);line-height:1.65;margin-bottom:22px;}
+  .sheets-card .note{
+    font-size:11.5px; color:var(--text-dim); background:rgba(255,255,255,.03);
+    border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:22px; line-height:1.6;
+  }
+  .btn-open{
+    display:inline-flex; align-items:center; gap:8px;
+    background:linear-gradient(135deg,var(--primary-500),var(--primary-400));
+    color:#06211f; font-weight:800; font-size:13.5px;
+    padding:13px 24px; border-radius:11px; text-decoration:none;
+    box-shadow:var(--glow-strong);
+    transition:transform .15s ease;
+  }
+  .btn-open:hover{transform:translateY(-2px);}
+
+  /* ── MOBILE ── */
+  @media (max-width:860px){
+    body{flex-direction:column;}
+    .sidebar{
+      width:100%; height:auto; flex-direction:row; border-right:0; border-bottom:1px solid var(--line);
+      order:2; position:fixed; bottom:0; left:0; right:0; z-index:20;
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    .brand,.sidebar-foot{display:none;}
+    .nav{display:flex; padding:8px; gap:4px; overflow-x:auto;}
+    .nav-label{display:none;}
+    .nav-item{flex-direction:column; gap:4px; flex:1; text-align:center; padding:8px 4px; min-width:64px;}
+    .nav-item .meta .s{display:none;}
+    .nav-item .meta .t{font-size:10px;}
+    .nav-item .dot{top:6px; right:14px;}
+    .main{height:calc(100vh - 74px); order:1;}
+    .clock{display:none;}
+  }
+</style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">FMC</div>
+      <div class="txt">
+        <h1>Sistema Integrado</h1>
+        <span>CAP Digital · 4 em 1</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="nav-label">Aplicativos</div>
+
+      <div class="nav-item active" data-app="cap">
+        <div class="ico">📝</div>
+        <div class="meta">
+          <div class="t">CAP Digital</div>
+          <div class="s">Abertura de chamados</div>
+        </div>
+      </div>
+
+      <div class="nav-item" data-app="dashboard">
+        <div class="ico">📊</div>
+        <div class="meta">
+          <div class="t">Dashboard</div>
+          <div class="s">Indicadores e KPIs</div>
+        </div>
+      </div>
+
+      <div class="nav-item" data-app="pmc">
+        <div class="ico">📺</div>
+        <div class="meta">
+          <div class="t">Painel PMC</div>
+          <div class="s">Monitor em tempo real</div>
+        </div>
+        <div class="dot"></div>
+      </div>
+
+      <div class="nav-item" data-app="sheets">
+        <div class="ico">📈</div>
+        <div class="meta">
+          <div class="t">Planilha</div>
+          <div class="s">Google Sheets · base</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <b>Central FMC</b> — os 4 sistemas rodam integrados nesta tela.<br>
+      Cada aba mantém seu próprio estado ao trocar de aplicativo.
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">
+        <span class="ico" id="tbIco">📝</span>
+        <div>
+          <h2 id="tbTitle">CAP Digital</h2>
+          <small id="tbSub">Formulário público de chamados</small>
+        </div>
+      </div>
+      <div class="actions">
+        <span class="clock" id="clock">--:--:--</span>
+        <button class="tbtn" id="btnReload" title="Recarregar aplicativo atual">⟳ Recarregar</button>
+        <a class="tbtn" id="btnNewTab" href="index.html" target="_blank" title="Abrir em nova aba">↗ Nova aba</a>
+      </div>
+    </div>
+
+    <div class="viewport" id="viewport">
+
+      <div class="pane show" id="pane-cap" data-src="index.html">
+        <div class="loader"><div class="spin"></div><span>Carregando CAP Digital…</span></div>
+      </div>
+
+      <div class="pane" id="pane-dashboard" data-src="dashboard.html">
+        <div class="loader"><div class="spin"></div><span>Carregando Dashboard…</span></div>
+      </div>
+
+      <div class="pane" id="pane-pmc" data-src="painel-pmc.html">
+        <div class="loader"><div class="spin"></div><span>Carregando Painel PMC…</span></div>
+      </div>
+
+      <div class="pane" id="pane-sheets">
+        <div class="sheets-wrap">
+          <div class="sheets-card">
+            <div class="big-ico">📈</div>
+            <h3>Planilha Google Sheets</h3>
+            <p>Base de dados que alimenta o CAP Digital, o Dashboard e o Painel PMC.</p>
+            <div class="note">O Google bloqueia a exibição do modo de edição dentro de outra página (iframe) por segurança. Use o botão abaixo para abrir a planilha em uma nova aba.</div>
+            <a class="btn-open" href="https://docs.google.com/spreadsheets/d/1dYU99Z_SpYrNS_nwhp4eepgqmCGXe-aJgbilhZaScgM/edit?gid=0#gid=0" target="_blank" rel="noopener">
+              Abrir planilha ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+<script>
+(function(){
+  const apps = {
+    cap:      { title:'CAP Digital',  sub:'Formulário público de chamados',   ico:'📝', pane:'pane-cap',       url:'index.html' },
+    dashboard:{ title:'Dashboard',    sub:'Indicadores e KPIs do CAP',        ico:'📊', pane:'pane-dashboard', url:'dashboard.html' },
+    pmc:      { title:'Painel PMC',   sub:'Monitor de chamados em tempo real',ico:'📺', pane:'pane-pmc',       url:'painel-pmc.html?v=20260717' },
+    sheets:   { title:'Planilha',     sub:'Base de dados · Google Sheets',    ico:'📈', pane:'pane-sheets',    url:null }
+  };
+
+  const loaded = {};
+  const nav = document.getElementById('nav');
+  const tbTitle = document.getElementById('tbTitle');
+  const tbSub = document.getElementById('tbSub');
+  const tbIco = document.getElementById('tbIco');
+  const btnNewTab = document.getElementById('btnNewTab');
+  const btnReload = document.getElementById('btnReload');
+  let current = 'cap';
+
+  function loadFrame(key){
+    const app = apps[key];
+    if (!app.url || loaded[key]) return;
+    const pane = document.getElementById(app.pane);
+    const iframe = document.createElement('iframe');
+    iframe.src = app.url;
+    iframe.title = app.title;
+    iframe.allow = 'clipboard-write; fullscreen; autoplay; notifications';
+    iframe.onload = function(){
+      const loader = pane.querySelector('.loader');
+      if (loader) loader.remove();
+    };
+    pane.appendChild(iframe);
+    loaded[key] = true;
+  }
+
+  function activate(key){
+    if (!apps[key]) return;
+    current = key;
+
+    document.querySelectorAll('.nav-item').forEach(el=>{
+      el.classList.toggle('active', el.dataset.app === key);
+    });
+    document.querySelectorAll('.pane').forEach(el=> el.classList.remove('show'));
+    document.getElementById(apps[key].pane).classList.add('show');
+
+    tbTitle.textContent = apps[key].title;
+    tbSub.textContent = apps[key].sub;
+    tbIco.textContent = apps[key].ico;
+
+    if (apps[key].url){
+      btnNewTab.style.display = 'inline-flex';
+      btnNewTab.href = apps[key].url;
+      btnReload.style.display = 'inline-flex';
+    } else {
+      btnNewTab.style.display = 'none';
+      btnReload.style.display = 'none';
+    }
+
+    loadFrame(key);
+  }
+
+  nav.addEventListener('click', function(e){
+    const item = e.target.closest('.nav-item');
+    if (item) activate(item.dataset.app);
+  });
+
+  btnReload.addEventListener('click', function(){
+    const app = apps[current];
+    if (!app.url) return;
+    const pane = document.getElementById(app.pane);
+    const oldFrame = pane.querySelector('iframe');
+    const loader = document.createElement('div');
+    loader.className = 'loader';
+    loader.innerHTML = '<div class="spin"></div><span>Recarregando '+app.title+'…</span>';
+    pane.appendChild(loader);
+    if (oldFrame) oldFrame.src = oldFrame.src;
+  });
+
+  // Clock
+  function tick(){
+    const d = new Date();
+    document.getElementById('clock').textContent = d.toLocaleTimeString('pt-BR');
+  }
+  tick(); setInterval(tick, 1000);
+
+  // Initial load
+  loadFrame('cap');
+})();
+</script>
+
+</body>
+</html>
