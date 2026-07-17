@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b2b2a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PMC Chamados">
+<link rel="manifest" href="manifest-pmc.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>PMC · Painel de Monitoramento de Chamados · FMC</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary-900:#0b2b2a; --primary-800:#16423e; --primary-700:#1f5a55; --primary-600:#2a7a73;
+    --primary-500:#3a9a92; --primary-400:#5bb8b0; --primary-300:#8bd4ce; --primary-100:#ddf3f0; --primary-50:#f2fbfa;
+    --neutral-900:#0b1120; --neutral-700:#334155; --neutral-500:#64748b; --neutral-300:#cbd5e1; --neutral-100:#f1f5f9;
+    --red:#dc2626; --red-bg:#fee2e2; --amber:#d97706; --amber-bg:#fef3c7; --green:#16a34a; --green-bg:#dcfce7;
+    --white:#ffffff;
+    --shadow-md:0 4px 16px rgba(11,43,42,0.10);
+    --shadow-lg:0 10px 30px rgba(11,43,42,0.16);
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--primary-50);
+    color:var(--neutral-900);
+    min-height:100vh;
+    padding-bottom:40px;
+    overflow-x:hidden;
+  }
+
+  /* ── UNLOCK OVERLAY (necessário p/ liberar som + notificações) ── */
+  #unlock{
+    position:fixed; inset:0; z-index:999;
+    background:linear-gradient(160deg,var(--primary-900),var(--primary-700));
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; padding:32px; text-align:center;
+  }
+  #unlock .logo-big{
+    width:76px;height:76px;border-radius:20px;
+    background:linear-gradient(135deg,var(--primary-500),var(--primary-300));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 28px rgba(0,0,0,0.25);
+  }
+  #unlock .logo-big svg{width:40px;height:40px;fill:#fff;}
+  #unlock h1{color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.3px;}
+  #unlock p{color:rgba(255,255,255,0.65);font-size:14px;max-width:320px;line-height:1.5;}
+  #btnUnlock{
+    margin-top:10px;
+    background:#fff; color:var(--primary-800); border:none;
+    padding:16px 34px; border-radius:100px; font-size:16px; font-weight:700;
+    cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  }
+  #btnUnlock:active{transform:scale(0.97);}
+  #unlock .hint{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;}
+
+  /* ── TOPBAR ── */
+  .topbar{
+    background:linear-gradient(145deg,var(--primary-900),var(--primary-800));
+    position:sticky; top:0; z-index:50;
+    box-shadow:0 2px 16px rgba(11,43,42,0.25);
+  }
+  .topbar-inner{
+    max-width:640px;margin:0 auto;padding:14px 18px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--primary-500),var(--primary-300));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .brand-mark svg{width:19px;height:19px;fill:#fff;}
+  .brand-text{min-width:0;}
+  .brand-title{color:#fff;font-size:14px;font-weight:800;letter-spacing:-0.1px;line-height:1.2;}
+  .brand-sub{color:rgba(255,255,255,0.5);font-size:10.5px;font-weight:500;letter-spacing:0.3px;}
+  .live-dot{
+    width:8px;height:8px;border-radius:50%;background:#5ce0a0;flex-shrink:0;
+    animation:pulse 2.6s infinite;
+  }
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,224,160,0.4);}70%{box-shadow:0 0 0 8px rgba(92,224,160,0);}100%{box-shadow:0 0 0 0 rgba(92,224,160,0);}}
+  .icon-btn{
+    width:38px;height:38px;border-radius:11px;flex-shrink:0;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+    display:flex;align-items:center;justify-content:center; cursor:pointer;
+    font-size:17px; color:#fff; text-decoration:none;
+  }
+  .icon-btn.off{opacity:0.4;}
+
+  /* ── SUMMARY ── */
+  .summary{max-width:640px;margin:16px auto 0;padding:0 18px;}
+  .summary-card{
+    background:linear-gradient(150deg,var(--primary-700),var(--primary-800));
+    border-radius:var(--radius); padding:20px 22px; color:#fff;
+    box-shadow:var(--shadow-lg); position:relative; overflow:hidden;
+  }
+  .summary-card::after{
+    content:'PMC'; position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    font-size:52px; font-weight:900; color:rgba(255,255,255,0.045); letter-spacing:-2px;
+  }
+  .summary-count{font-size:42px;font-weight:900;line-height:1;letter-spacing:-1.5px;}
+  .summary-label{font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:6px;}
+  .summary-stats{display:flex;align-items:center;gap:22px;position:relative;z-index:1;}
+  .stat-divider{width:1px;align-self:stretch;background:rgba(255,255,255,0.14);}
+  .stat.secundario .summary-count{font-size:30px;color:rgba(255,255,255,0.92);}
+  .summary-chips{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;position:relative;z-index:1;}
+  .chip{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.14);
+    border-radius:100px; padding:6px 13px; font-size:12px; font-weight:700;
+  }
+  .chip .dot{width:7px;height:7px;border-radius:50%;}
+  .chip.alta .dot{background:#f87171;} .chip.media .dot{background:#fbbf24;} .chip.baixa .dot{background:#5bb8b0;}
+
+  /* ── LISTA ── */
+  .lista{max-width:640px;margin:18px auto 0;padding:0 18px;display:flex;flex-direction:column;gap:12px;}
+
+  .card{
+    background:var(--white); border-radius:var(--radius); padding:16px 18px;
+    box-shadow:var(--shadow-md); border-left:5px solid var(--neutral-300);
+    position:relative; transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card.urg-Alta{border-left-color:var(--red);}
+  .card.urg-Média{border-left-color:var(--amber);}
+  .card.urg-Baixa{border-left-color:var(--primary-600);}
+  .card.novo{animation:novoPulse 1.8s ease 3;}
+  @keyframes novoPulse{
+    0%,100%{box-shadow:var(--shadow-md);}
+    50%{box-shadow:0 0 0 6px rgba(220,38,38,0.18), var(--shadow-lg);}
+  }
+
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;
+    padding-bottom:10px;border-bottom:1px solid var(--neutral-100);}
+  .proto{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+    color:var(--primary-600); background:var(--primary-50); border:1px solid var(--primary-100);
+    padding:3px 9px; border-radius:100px; letter-spacing:0.2px;
+  }
+  .tempo{font-size:11px;font-weight:600;color:var(--neutral-500);white-space:nowrap;}
+  .tempo.atrasado{color:var(--red);}
+
+  .sala-row{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
+  .sala{font-size:19px;font-weight:800;letter-spacing:-0.3px;color:var(--neutral-900);}
+  .badge-urg{font-size:10.5px;font-weight:800;letter-spacing:0.3px;padding:3px 10px;border-radius:100px;text-transform:uppercase;}
+  .badge-urg.Alta{background:var(--red-bg);color:var(--red);}
+  .badge-urg.Média{background:var(--amber-bg);color:var(--amber);}
+  .badge-urg.Baixa{background:var(--primary-100);color:var(--primary-700);}
+
+  .categoria{font-size:13px;color:var(--neutral-700);font-weight:500;margin-bottom:6px;}
+
+  /* ── CAMPOS ESTILO "CARD DE CHAMADO" (mesmo padrão do alerta que ia pro WhatsApp) ── */
+  .info-rows{display:flex;flex-direction:column;gap:7px;margin:4px 0 12px;}
+  .info-row{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--neutral-700);line-height:1.4;}
+  .info-row .ico{flex-shrink:0;width:16px;text-align:center;font-size:12px;line-height:1.5;opacity:0.7;}
+  .info-row .lbl{font-weight:700;color:var(--neutral-900);flex-shrink:0;min-width:82px;}
+  .info-row .val{color:var(--neutral-500);word-break:break-word;}
+  .info-row a.val{color:var(--primary-600);font-weight:600;text-decoration:none;}
+  .status-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:0.3px;
+    text-transform:uppercase;padding:3px 10px;border-radius:100px;background:var(--amber-bg);color:var(--amber);}
+  .status-pill.status-pendente{background:var(--amber-bg);color:var(--amber);}
+  .status-pill.status-atendimento{background:var(--primary-100);color:var(--primary-700);}
+  .status-pill.status-concluido{background:var(--green-bg);color:var(--green);}
+
+  .btn-excluir{
+    display:block; width:100%; margin-top:8px; background:none; border:none;
+    color:var(--neutral-300); font-size:10.5px; font-weight:600; text-decoration:underline;
+    text-underline-offset:2px; cursor:pointer; padding:4px; text-align:center;
+  }
+  .btn-excluir:active{color:var(--red);}
+
+  .actions{display:flex;gap:8px;}
+  .btn{
+    flex:1; border:none; border-radius:11px; padding:11px 10px; font-size:13px; font-weight:700;
+    cursor:pointer; display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn-atender{background:var(--primary-600);color:#fff;}
+  .btn-atender:active{background:var(--primary-700);}
+  .btn-feito{flex:1;background:var(--green-bg);color:var(--green);border-radius:11px;padding:11px 10px;
+    font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-call{
+    width:44px;flex:none;background:var(--primary-50);color:var(--primary-700);border:1px solid var(--primary-100);
+  }
+  .btn.loading{opacity:0.55;pointer-events:none;}
+
+  /* ── EMPTY STATE ── */
+  .empty{
+    max-width:640px;margin:60px auto 0;padding:0 30px;text-align:center;
+  }
+  .empty-icon{font-size:52px;margin-bottom:14px;}
+  .empty-title{font-size:18px;font-weight:800;color:var(--neutral-900);margin-bottom:6px;}
+  .empty-sub{font-size:13px;color:var(--neutral-500);}
+
+  /* ── FOOTER ── */
+  .footer{max-width:640px;margin:26px auto 0;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--neutral-500);}
+  .footer a{color:var(--primary-600);text-decoration:none;font-weight:600;}
+
+  /* ── TOAST ── */
+  #toast{
+    position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(120%);
+    background:var(--neutral-900); color:#fff; padding:12px 20px; border-radius:100px;
+    font-size:13px; font-weight:600; box-shadow:var(--shadow-lg); z-index:200;
+    transition:transform 0.3s ease; max-width:90%; text-align:center;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* ── QUADRO DE CHAMADOS (colunas por status + quadrados coloridos por categoria) ── */
+  .board{max-width:640px;margin:18px auto 0;padding:0 18px;display:grid;grid-template-columns:1fr;gap:16px;}
+  .coluna{background:rgba(255,255,255,.7);border:1px solid var(--neutral-100);border-radius:16px;padding:12px;}
+  .coluna-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;}
+  .coluna-titulo{font-size:13px;font-weight:800;letter-spacing:0.2px;color:var(--neutral-700);}
+  .coluna-count{background:var(--primary-700);color:#fff;font-size:11.5px;font-weight:800;border-radius:100px;padding:2px 10px;min-width:22px;text-align:center;}
+  .coluna-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
+  .coluna-vazia{grid-column:1/-1;text-align:center;font-size:12px;color:var(--neutral-500);padding:10px 0;}
+
+  .quadrado{
+    position:relative;aspect-ratio:1/1;border-radius:12px;color:#fff;
+    display:flex;flex-direction:column;justify-content:space-between;padding:8px 9px;
+    cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .quadrado:active{transform:scale(0.96);}
+  .quadrado .qz-urg{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.55);}
+  .quadrado .qz-proto{font-size:9.5px;font-weight:700;opacity:.85;font-family:'JetBrains Mono',monospace;}
+  .quadrado .qz-sala{font-size:12.5px;font-weight:800;line-height:1.2;word-break:break-word;}
+  .quadrado .qz-tempo{font-size:9.5px;font-weight:600;opacity:.9;}
+  .quadrado.novo{animation:novoPulseQz 1.8s ease 3;}
+  @keyframes novoPulseQz{0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.18);}50%{box-shadow:0 0 0 7px rgba(255,255,255,.35);}}
+
+  /* legenda de cores por categoria */
+  .legenda{max-width:640px;margin:14px auto 0;padding:0 18px;display:flex;flex-wrap:wrap;gap:8px;}
+  .legenda-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--neutral-700);
+    background:rgba(255,255,255,.7);border:1px solid var(--neutral-100);border-radius:100px;padding:4px 10px;}
+  .legenda-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+
+  /* modal de detalhes do chamado (abre ao clicar no quadrado) */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(11,23,21,.55);
+    display:none;align-items:center;justify-content:center;z-index:300;padding:20px;
+  }
+  .modal-overlay.aberto{display:flex;}
+  .modal-box{
+    background:var(--white);border-radius:18px;max-width:420px;width:100%;
+    max-height:88vh;overflow-y:auto;padding:24px 22px 20px;position:relative;box-shadow:var(--shadow-lg);
+  }
+  .modal-fechar{
+    position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:10px;
+    border:none;background:var(--neutral-100);font-size:15px;cursor:pointer;color:var(--neutral-700);
+  }
+  .modal-tag{display:inline-block;font-size:11px;font-weight:800;color:#fff;padding:4px 11px;border-radius:100px;margin-bottom:10px;}
+  .modal-box h2{font-size:17px;margin:0 0 14px;color:var(--neutral-900);padding-right:30px;}
+  .modal-info-row{display:flex;gap:8px;padding:9px 0;border-bottom:1px solid var(--neutral-100);font-size:13.5px;}
+  .modal-info-row .lbl{font-weight:700;color:var(--neutral-700);min-width:100px;flex-shrink:0;}
+  .modal-info-row .val{color:var(--neutral-900);word-break:break-word;}
+  .modal-info-row a.val{color:var(--primary-600);font-weight:600;text-decoration:none;}
+  .modal-acoes{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+  .modal-acoes .btn-call{text-decoration:none;padding:11px 14px;}
+
+  body.dark-mode .coluna{background:#0f2523;border-color:rgba(255,255,255,.08);}
+  body.dark-mode .coluna-titulo{color:#eafffb;}
+  body.dark-mode .coluna-vazia{color:#93a6a3;}
+  body.dark-mode .legenda-item{background:#0f2523;border-color:rgba(255,255,255,.08);color:#c7d8d5;}
+  body.dark-mode .modal-box{background:#0b1e1c;color:#eafffb;}
+  body.dark-mode .modal-box h2{color:#eafffb;}
+  body.dark-mode .modal-info-row{border-color:rgba(255,255,255,.08);}
+  body.dark-mode .modal-info-row .lbl{color:#eafffb;}
+  body.dark-mode .modal-info-row .val{color:#c7d8d5;}
+  body.dark-mode .modal-fechar{background:rgba(255,255,255,.1);color:#eafffb;}
+
+  /* ── TELAS GRANDES (desktop / TV) — ocupa a largura inteira em grid ── */
+  @media (min-width: 900px){
+    .topbar-inner, .summary, .lista, .footer, .board, .legenda{ max-width:100%; padding-left:36px; padding-right:36px; }
+    .lista{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 380px)); gap:18px 20px; justify-content:start; align-items:start; }
+    .board{ grid-template-columns:repeat(3,1fr); gap:20px; align-items:start; }
+    .coluna-grid{ grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
+    .card{ padding:18px 20px; }
+    .summary-card{ padding:24px 34px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px 32px; }
+    .summary-stats{ gap:32px; }
+    .summary-count{ font-size:46px; }
+    .stat.secundario .summary-count{ font-size:34px; }
+    .summary-chips{ margin-top:16px; width:100%; } /* força nova linha, longe da marca d'água "PMC" */
+    .brand-title{ font-size:16px; }
+    .brand-sub{ font-size:12px; }
+  }
+
+  /* ── TVs / telas bem grandes — tudo maior pra ler de longe ── */
+  @media (min-width: 1400px){
+    body{ font-size:16px; }
+    .lista{ grid-template-columns:repeat(auto-fill, minmax(400px, 460px)); gap:22px; }
+    .coluna-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px; }
+    .quadrado .qz-sala{ font-size:15px; }
+    .quadrado .qz-proto, .quadrado .qz-tempo{ font-size:11.5px; }
+    .modal-box{ max-width:480px; padding:30px 28px 24px; }
+    .summary-count{ font-size:60px; }
+    .stat.secundario .summary-count{ font-size:42px; }
+    .sala{ font-size:24px; }
+    .info-row{ font-size:15px; }
+    .info-row .lbl{ min-width:100px; }
+    .btn{ padding:14px 12px; font-size:15px; }
+    .proto, .tempo{ font-size:13px; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     REFINAMENTO VISUAL 2026 — somente apresentação
+     A lógica, os IDs e os comportamentos do sistema permanecem intactos.
+     ═══════════════════════════════════════════════════════════ */
+  :root{
+    --surface:#ffffff;
+    --surface-soft:rgba(255,255,255,.78);
+    --line:rgba(15,23,42,.08);
+    --line-strong:rgba(15,23,42,.12);
+    --text-muted:#64748b;
+    --shadow-card:0 1px 2px rgba(15,23,42,.04), 0 10px 28px rgba(15,23,42,.07);
+    --shadow-card-hover:0 4px 12px rgba(15,23,42,.05), 0 18px 42px rgba(15,23,42,.10);
+  }
+
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(circle at 8% 0%, rgba(91,184,176,.11), transparent 30%),
+      radial-gradient(circle at 92% 16%, rgba(42,122,115,.08), transparent 24%),
+      linear-gradient(180deg,#f8fcfb 0%,#f4f8f8 48%,#eef5f4 100%);
+    padding-bottom:56px;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
+    background-image:linear-gradient(rgba(11,43,42,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(11,43,42,.018) 1px,transparent 1px);
+    background-size:32px 32px;
+    mask-image:linear-gradient(to bottom,rgba(0,0,0,.52),transparent 72%);
+  }
+  button,a,.icon-btn{transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease,opacity .18s ease;}
+  button:focus-visible,a:focus-visible,.icon-btn:focus-visible{outline:3px solid rgba(91,184,176,.34);outline-offset:3px;}
+
+  /* Ativação */
+  #unlock{
+    background:
+      radial-gradient(circle at 50% 18%,rgba(91,184,176,.30),transparent 28%),
+      linear-gradient(150deg,#071f1f 0%,#0b2b2a 48%,#16423e 100%);
+  }
+  #unlock::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:34px 34px;mask-image:radial-gradient(circle at center,#000,transparent 76%);
+  }
+  #unlock > *{position:relative;z-index:1;}
+  #unlock .logo-big{width:84px;height:84px;border-radius:24px;box-shadow:0 18px 60px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.25);}
+  #unlock h1{font-size:clamp(22px,5vw,30px);letter-spacing:-.8px;}
+  #unlock p{font-size:14px;max-width:430px;color:rgba(255,255,255,.72);}
+  #btnUnlock{padding:16px 30px;border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.26);}
+  #btnUnlock:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(0,0,0,.31);}
+
+  /* Barra superior */
+  .topbar{
+    background:rgba(7,31,31,.92);
+    border-bottom:1px solid rgba(255,255,255,.09);
+    box-shadow:0 8px 30px rgba(7,31,31,.16);
+    backdrop-filter:blur(18px) saturate(125%);
+    -webkit-backdrop-filter:blur(18px) saturate(125%);
+  }
+  .topbar-inner{max-width:1280px;padding:12px 20px;min-height:68px;}
+  .brand{gap:12px;}
+  .brand-mark{width:42px;height:42px;border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 8px 24px rgba(0,0,0,.18);}
+  .brand-mark svg{width:22px;height:22px;}
+  .brand-title{font-size:15px;letter-spacing:-.2px;}
+  .brand-sub{font-size:11px;color:rgba(255,255,255,.58);margin-top:2px;}
+  .live-dot{width:9px;height:9px;box-shadow:0 0 0 5px rgba(92,224,160,.10);}
+  .icon-btn{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.11);}
+  .icon-btn:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.20);transform:translateY(-1px);}
+  .icon-btn:active{transform:scale(.96);}
+
+  /* Resumo */
+  .summary{max-width:1280px;margin-top:22px;padding:0 20px;}
+  .summary-card{
+    border-radius:22px;padding:24px 26px;
+    background:
+      radial-gradient(circle at 86% 20%,rgba(139,212,206,.24),transparent 24%),
+      linear-gradient(135deg,#123a38 0%,#16423e 52%,#0f3432 100%);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 20px 55px rgba(11,43,42,.18),inset 0 1px 0 rgba(255,255,255,.09);
+  }
+  .summary-card::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.07),transparent 32%);pointer-events:none;}
+  .summary-card::after{right:22px;font-size:72px;color:rgba(255,255,255,.035);letter-spacing:-5px;}
+  .summary-stats{gap:28px;}
+  .summary-count{font-size:46px;letter-spacing:-2.3px;font-variant-numeric:tabular-nums;}
+  .stat.secundario .summary-count{font-size:34px;}
+  .summary-label{font-size:11px;letter-spacing:1.35px;color:rgba(255,255,255,.60);}
+  .summary-chips{gap:8px;}
+  .chip{padding:7px 12px;background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.12);backdrop-filter:blur(6px);}
+
+  /* Lista e cards */
+  .lista{max-width:1280px;margin-top:20px;padding:0 20px;gap:14px;}
+  .card{
+    border-radius:18px;padding:17px 18px 16px;
+    border:1px solid var(--line);
+    border-left:1px solid var(--line);
+    box-shadow:var(--shadow-card);
+    overflow:hidden;
+    isolation:isolate;
+  }
+  .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--neutral-300);z-index:2;}
+  .card.urg-Alta::before{background:linear-gradient(180deg,#ef4444,#b91c1c);}
+  .card.urg-Média::before{background:linear-gradient(180deg,#f59e0b,#d97706);}
+  .card.urg-Baixa::before{background:linear-gradient(180deg,var(--primary-500),var(--primary-700));}
+  .card::after{content:'';position:absolute;width:130px;height:130px;border-radius:50%;right:-68px;top:-74px;background:rgba(42,122,115,.045);z-index:-1;}
+  .card:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover);border-color:rgba(42,122,115,.15);}
+  .card-top{margin-bottom:12px;padding-bottom:11px;border-color:var(--line);}
+  .proto{font-size:10.5px;padding:4px 9px;background:#f0f8f7;border-color:#d7eeeb;color:#1d6c65;}
+  .tempo{font-size:10.5px;display:inline-flex;align-items:center;gap:5px;}
+  .tempo::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.45;}
+  .sala-row{align-items:center;margin-bottom:8px;gap:9px;}
+  .sala{font-size:21px;line-height:1.15;letter-spacing:-.55px;}
+  .badge-urg{font-size:9.5px;padding:4px 9px;letter-spacing:.45px;}
+  .categoria{font-size:13px;}
+  .info-rows{gap:0;margin:2px 0 14px;background:#fbfdfd;border:1px solid rgba(15,23,42,.055);border-radius:13px;padding:4px 12px;}
+  .info-row{padding:7px 0;gap:8px;border-bottom:1px dashed rgba(15,23,42,.07);font-size:12.5px;}
+  .info-row:last-child{border-bottom:none;}
+  .info-row .ico{width:17px;opacity:.72;}
+  .info-row .lbl{min-width:78px;font-size:12px;}
+  .info-row .val{line-height:1.45;}
+  .status-pill{padding:4px 9px;font-size:9.5px;}
+  .actions{gap:9px;}
+  .btn{min-height:42px;border-radius:12px;box-shadow:none;}
+  .btn-atender{background:linear-gradient(135deg,var(--primary-600),var(--primary-700));box-shadow:0 7px 16px rgba(42,122,115,.18);}
+  .btn-atender:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(42,122,115,.23);}
+  .btn-call{width:44px;background:#f5fbfa;border-color:#d9efec;}
+  .btn-call:hover{background:#eaf7f5;transform:translateY(-1px);}
+  .btn-feito{background:linear-gradient(180deg,#ecfdf3,#dcfce7);border:1px solid #bbf7d0;}
+  .btn-excluir{margin-top:10px;color:#a7b2c0;text-decoration:none;opacity:.75;}
+  .btn-excluir:hover{color:var(--red);opacity:1;}
+
+  /* Estado vazio */
+  .empty{max-width:640px;margin-top:70px;}
+  .empty-icon{width:76px;height:76px;margin:0 auto 18px;display:grid;place-items:center;border-radius:22px;background:rgba(255,255,255,.88);box-shadow:var(--shadow-card);font-size:38px;}
+  .empty-title{font-size:20px;letter-spacing:-.35px;}
+  .empty-sub{font-size:13px;line-height:1.55;}
+
+  /* Rodapé e feedback */
+  .footer{max-width:1280px;margin-top:30px;padding:0 20px;border-top:1px solid rgba(15,23,42,.07);padding-top:18px;}
+  .footer a{display:inline-flex;align-items:center;gap:4px;}
+  .footer a:hover{color:var(--primary-800);}
+  #toast{bottom:26px;border:1px solid rgba(255,255,255,.10);background:rgba(11,17,32,.94);backdrop-filter:blur(12px);box-shadow:0 18px 45px rgba(15,23,42,.25);}
+
+  /* Scrollbar discreta */
+  *{scrollbar-width:thin;scrollbar-color:rgba(42,122,115,.35) transparent;}
+  *::-webkit-scrollbar{width:10px;height:10px;}
+  *::-webkit-scrollbar-track{background:transparent;}
+  *::-webkit-scrollbar-thumb{background:rgba(42,122,115,.28);border:3px solid transparent;background-clip:padding-box;border-radius:999px;}
+
+  /* Mobile */
+  @media (max-width: 560px){
+    body{padding-bottom:34px;}
+    .topbar-inner{padding:10px 12px;gap:7px;min-height:62px;}
+    .brand{gap:9px;}
+    .brand-mark{width:38px;height:38px;border-radius:11px;}
+    .brand-title{font-size:13.5px;}
+    .brand-sub{font-size:9.5px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .icon-btn{width:36px;height:36px;border-radius:10px;font-size:15px;}
+    .live-dot{display:none;}
+    .summary{margin-top:14px;padding:0 12px;}
+    .summary-card{padding:18px;border-radius:18px;}
+    .summary-card::after{font-size:48px;right:12px;}
+    .summary-stats{gap:18px;}
+    .summary-count{font-size:38px;}
+    .stat.secundario .summary-count{font-size:28px;}
+    .summary-label{font-size:9.5px;letter-spacing:1px;}
+    .summary-chips{margin-top:14px;gap:6px;}
+    .chip{font-size:10.5px;padding:6px 9px;}
+    .lista{margin-top:14px;padding:0 12px;gap:11px;}
+    .card{padding:15px 14px 14px;border-radius:16px;}
+    .card:hover{transform:none;}
+    .sala{font-size:19px;}
+    .info-rows{padding:4px 10px;}
+    .info-row{font-size:12px;gap:6px;}
+    .info-row .lbl{min-width:74px;font-size:11.5px;}
+    .btn{min-height:44px;font-size:12.5px;}
+    .footer{margin-top:22px;padding:15px 12px 0;font-size:10px;gap:12px;}
+    #toast{bottom:16px;border-radius:16px;padding:11px 15px;}
+  }
+
+  /* Desktop */
+  @media (min-width: 900px){
+    .topbar-inner,.summary,.lista,.footer{max-width:1280px;padding-left:28px;padding-right:28px;}
+    .topbar-inner{margin:0 auto;}
+    .lista{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;}
+    .summary-card{padding:25px 30px;}
+    .summary-card::after{font-size:86px;right:30px;}
+  }
+
+  @media (min-width: 1400px){
+    .topbar-inner,.summary,.lista,.footer{max-width:1580px;}
+    .lista{grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:20px;}
+    .card{padding:19px 20px 18px;}
+    .sala{font-size:23px;}
+    .info-row{font-size:14px;}
+    .info-row .lbl{min-width:96px;font-size:13px;}
+    .summary-count{font-size:56px;}
+    .stat.secundario .summary-count{font-size:40px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}
+  }
+
+
+  /* Visualização em lista vertical: cards sempre um abaixo do outro */
+  .lista{
+    display:flex !important;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .lista .card{
+    width:100%;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MELHORIA VISUAL — ícones e fontes maiores, painel mais luminoso
+     (somente aparência; nenhuma lógica/comportamento foi alterado)
+     ═══════════════════════════════════════════════════════════ */
+  :root{
+    --primary-500:#14ecdf;
+    --primary-400:#4dfdf0;
+    --primary-300:#a6fff6;
+    --primary-600:#00b3a6;
+    --glow-cyan:rgba(20,236,223,.55);
+  }
+
+  body{ font-size:16px; }
+
+  /* Ícones maiores */
+  .icon-btn{width:48px;height:48px;border-radius:14px;font-size:21px;}
+  .brand-mark{width:50px;height:50px;border-radius:15px;}
+  .brand-mark svg{width:27px;height:27px;}
+  #unlock .logo-big{width:96px;height:96px;}
+  #unlock .logo-big svg{width:50px;height:50px;}
+  .empty-icon{width:92px;height:92px;font-size:46px;}
+  .info-row .ico{font-size:16px;width:20px;}
+  .live-dot{width:11px;height:11px;}
+
+  /* Fontes maiores */
+  .brand-title{font-size:18px;}
+  .brand-sub{font-size:13px;}
+  .summary-count{font-size:54px;}
+  .stat.secundario .summary-count{font-size:40px;}
+  .summary-label{font-size:13px;}
+  .chip{font-size:14px;padding:8px 14px;}
+  .proto{font-size:13px;padding:5px 11px;}
+  .tempo{font-size:13px;}
+  .sala{font-size:25px;}
+  .badge-urg{font-size:11.5px;padding:5px 11px;}
+  .categoria{font-size:15px;}
+  .info-row{font-size:15px;}
+  .info-row .lbl{font-size:14.5px;min-width:96px;}
+  .status-pill{font-size:11.5px;padding:5px 11px;}
+  .btn{font-size:15px;min-height:48px;}
+  .btn-feito{font-size:15px;}
+  .btn-excluir{font-size:12px;}
+  .empty-title{font-size:22px;}
+  .empty-sub{font-size:15px;}
+  .footer{font-size:13px;}
+  #toast{font-size:15px;padding:14px 22px;}
+  #unlock h1{font-size:clamp(24px,5.5vw,34px);}
+  #unlock p{font-size:16px;}
+  #btnUnlock{font-size:17px;}
+
+  /* Painel mais luminoso — brilho ciano inspirado na referência */
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, rgba(20,236,223,.16), transparent 32%),
+      radial-gradient(circle at 90% 14%, rgba(20,236,223,.12), transparent 26%),
+      linear-gradient(180deg,#f4fffe 0%,#eefdfb 46%,#e6faf7 100%);
+  }
+  .topbar{
+    background:linear-gradient(160deg,#04211f 0%,#0b2b2a 55%,#0e3634 100%);
+    border-bottom:1px solid rgba(20,236,223,.28);
+    box-shadow:0 8px 34px rgba(20,236,223,.14);
+  }
+  .brand-mark{
+    background:linear-gradient(135deg,var(--primary-400),var(--primary-300));
+    box-shadow:0 0 0 1px rgba(255,255,255,.25) inset, 0 0 22px var(--glow-cyan);
+  }
+  .icon-btn{
+    background:rgba(20,236,223,.10);
+    border-color:rgba(20,236,223,.24);
+  }
+  .icon-btn:hover{
+    background:rgba(20,236,223,.20);
+    box-shadow:0 0 18px var(--glow-cyan);
+  }
+  .live-dot{
+    background:#3dffd0;
+    box-shadow:0 0 12px rgba(61,255,208,.8);
+  }
+  .summary-card{
+    background:
+      radial-gradient(circle at 84% 18%, rgba(20,236,223,.34), transparent 30%),
+      linear-gradient(135deg,#0e3835 0%,#124541 52%,#0c302e 100%);
+    border:1px solid rgba(20,236,223,.24);
+    box-shadow:0 22px 60px rgba(20,236,223,.16), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .summary-count{
+    text-shadow:0 0 24px rgba(20,236,223,.45);
+  }
+  .chip{
+    background:rgba(20,236,223,.12);
+    border-color:rgba(20,236,223,.22);
+  }
+  .card{
+    box-shadow:0 1px 2px rgba(15,23,42,.05), 0 12px 34px rgba(20,236,223,.10);
+    border-color:rgba(20,236,223,.14);
+  }
+  .card:hover{
+    box-shadow:0 4px 14px rgba(15,23,42,.06), 0 20px 50px rgba(20,236,223,.20);
+    border-color:rgba(20,236,223,.30);
+  }
+  .card.urg-Baixa::before{background:linear-gradient(180deg,var(--primary-400),var(--primary-600));}
+  .proto{
+    background:rgba(20,236,223,.08);
+    border-color:rgba(20,236,223,.24);
+    color:#0a8f85;
+  }
+  .btn-atender{
+    background:linear-gradient(135deg,var(--primary-500),var(--primary-600));
+    box-shadow:0 8px 20px rgba(20,236,223,.30);
+  }
+  .btn-atender:hover{
+    box-shadow:0 12px 26px rgba(20,236,223,.38);
+  }
+  .btn-call{
+    background:rgba(20,236,223,.08);
+    border-color:rgba(20,236,223,.22);
+    color:#0a8f85;
+  }
+  #unlock{
+    background:
+      radial-gradient(circle at 50% 16%,rgba(20,236,223,.38),transparent 30%),
+      linear-gradient(150deg,#03201f 0%,#0b2b2a 48%,#124541 100%);
+  }
+  #btnUnlock{
+    box-shadow:0 16px 40px rgba(20,236,223,.28);
+  }
+
+  /* Mobile: mantém ícones/fonte proporcionalmente maiores */
+  @media (max-width:560px){
+    .icon-btn{width:44px;height:44px;font-size:19px;}
+    .brand-mark{width:44px;height:44px;}
+    .brand-mark svg{width:23px;height:23px;}
+    .sala{font-size:24px;}
+    .info-row{font-size:15.5px;}
+    .btn{font-size:16px;min-height:50px;}
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     AJUSTE 2 — itens do chamado ainda maiores + verde do botão
+     igual ao verde do topo (mesmo tom da topbar/resumo)
+     ═══════════════════════════════════════════════════════════ */
+  .card{padding:22px 24px 20px;}
+  .card-top{margin-bottom:14px;padding-bottom:13px;}
+  .proto{font-size:15px;padding:6px 13px;}
+  .tempo{font-size:15px;}
+  .sala-row{margin-bottom:10px;gap:11px;}
+  .sala{font-size:30px;}
+  .badge-urg{font-size:13px;padding:6px 13px;}
+  .categoria{font-size:17px;}
+  .info-rows{padding:6px 16px;gap:0;}
+  .info-row{font-size:17px;padding:9px 0;gap:10px;}
+  .info-row .ico{font-size:18px;width:22px;}
+  .info-row .lbl{font-size:16.5px;min-width:112px;}
+  .status-pill{font-size:13px;padding:6px 13px;}
+  .actions{gap:11px;}
+  .btn{font-size:18px;min-height:56px;border-radius:14px;}
+  .btn-feito{font-size:18px;min-height:56px;}
+  .btn-call{width:56px;font-size:19px;}
+  .btn-excluir{font-size:13px;margin-top:12px;}
+  .chip{font-size:15px;padding:9px 16px;}
+  .summary-count{font-size:58px;}
+  .stat.secundario .summary-count{font-size:42px;}
+  .summary-label{font-size:14px;}
+
+  /* Verde do botão Assumir/Concluir igual ao verde do topo (topbar/resumo) */
+  .btn-atender{
+    background:linear-gradient(150deg,#124541 0%,#16423e 55%,#0b2b2a 100%);
+    box-shadow:0 8px 20px rgba(11,43,42,.35);
+  }
+  .btn-atender:hover{
+    box-shadow:0 12px 26px rgba(11,43,42,.42);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     AJUSTE 3 — SOMENTE CELULAR: reduz um pouco fonte/ícones
+     (estava espremido) + ícone de telefone verde. Desktop/TV
+     não são afetados por este bloco.
+     ═══════════════════════════════════════════════════════════ */
+  @media (max-width:560px){
+    .brand-title{font-size:14px;}
+    .brand-sub{font-size:10.5px;}
+    .icon-btn{width:38px;height:38px;border-radius:11px;font-size:16px;}
+    .brand-mark{width:38px;height:38px;border-radius:11px;}
+    .brand-mark svg{width:20px;height:20px;}
+
+    .summary-count{font-size:40px;}
+    .stat.secundario .summary-count{font-size:29px;}
+    .summary-label{font-size:10.5px;}
+    .chip{font-size:12px;padding:6px 11px;}
+
+    .card{padding:16px 16px 14px;}
+    .card-top{margin-bottom:10px;padding-bottom:9px;}
+    .proto{font-size:12px;padding:4px 10px;}
+    .tempo{font-size:12px;}
+    .sala-row{margin-bottom:7px;gap:8px;}
+    .sala{font-size:20px;}
+    .badge-urg{font-size:10.5px;padding:4px 9px;}
+    .categoria{font-size:13.5px;}
+
+    .info-rows{padding:5px 12px;}
+    .info-row{font-size:13.5px;padding:7px 0;gap:7px;}
+    .info-row .ico{font-size:14px;width:18px;}
+    .info-row .lbl{font-size:13px;min-width:82px;}
+    .status-pill{font-size:10.5px;padding:4px 9px;}
+
+    .actions{gap:8px;}
+    .btn{font-size:14px;min-height:46px;border-radius:12px;}
+    .btn-feito{font-size:14px;min-height:46px;}
+    .btn-call{width:46px;font-size:17px;}
+    .btn-excluir{font-size:11px;margin-top:8px;}
+
+    /* Ícone de telefone (ligar) em verde — só no celular */
+    a.btn-call[href^="tel:"]{
+      color:#16a34a;
+      background:rgba(22,163,74,.10);
+      border-color:rgba(22,163,74,.28);
+    }
+
+    /* Botão de modo escuro é exclusivo do desktop/TV */
+    #btnDark{display:none;}
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     AJUSTE 4 — MODO ESCURO (botão exclusivo desktop/TV)
+     Ativado via classe body.dark-mode; nada mais foi alterado.
+     ═══════════════════════════════════════════════════════════ */
+  #btnDark{display:none;}
+  @media (min-width:900px){
+    #btnDark{display:flex;}
+  }
+
+  body.dark-mode{
+    background:
+      radial-gradient(circle at 10% 0%, rgba(20,236,223,.10), transparent 32%),
+      radial-gradient(circle at 90% 14%, rgba(20,236,223,.08), transparent 26%),
+      linear-gradient(180deg,#0a1414 0%,#0c1a1a 46%,#0a1717 100%);
+    color:#e7f3f1;
+  }
+  body.dark-mode .card{
+    background:#0f2422;
+    border-color:rgba(20,236,223,.16);
+    box-shadow:0 1px 2px rgba(0,0,0,.30), 0 12px 34px rgba(0,0,0,.35);
+  }
+  body.dark-mode .card:hover{
+    box-shadow:0 4px 14px rgba(0,0,0,.35), 0 20px 50px rgba(20,236,223,.16);
+    border-color:rgba(20,236,223,.28);
+  }
+  body.dark-mode .card-top{border-color:rgba(255,255,255,.08);}
+  body.dark-mode .sala{color:#eafffb;}
+  body.dark-mode .categoria{color:#b7c9c6;}
+  body.dark-mode .info-rows{background:#0b1e1c;border-color:rgba(255,255,255,.07);}
+  body.dark-mode .info-row{color:#c7d8d5;border-color:rgba(255,255,255,.07);}
+  body.dark-mode .info-row .lbl{color:#eafffb;}
+  body.dark-mode .info-row .val{color:#9db3af;}
+  body.dark-mode .tempo{color:#93a6a3;}
+  body.dark-mode .proto{background:rgba(20,236,223,.08);border-color:rgba(20,236,223,.22);color:#7fe8dd;}
+  body.dark-mode .btn-call{background:rgba(20,236,223,.10);border-color:rgba(20,236,223,.25);color:#8ff5ec;}
+  body.dark-mode .empty-icon{background:#132a27;}
+  body.dark-mode .empty-title{color:#eafffb;}
+  body.dark-mode .empty-sub{color:#93a6a3;}
+  body.dark-mode .footer{color:#93a6a3;border-color:rgba(255,255,255,.08);}
+  body.dark-mode .footer a{color:#7fe8dd;}
+  body.dark-mode #toast{background:rgba(11,17,32,.96);}
+
+</style>
+</head>
+<body>
+
+<!-- ── OVERLAY DE ATIVAÇÃO (obrigatório: libera áudio + push do navegador) ── -->
+<div id="unlock">
+  <div class="logo-big">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+  </div>
+  <h1>PMC · Monitor de Chamados</h1>
+  <p>Toque para ativar o painel nesta tela. Isso libera o alerta sonoro, a vibração e as notificações do navegador para os chamados pendentes.</p>
+  <button id="btnUnlock">🔔 Ativar monitoramento</button>
+  <div class="hint">Deixe esta tela sempre aberta no aparelho da equipe</div>
+</div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">PMC · FMC</div>
+        <div class="brand-sub">Painel de Monitoramento de Chamados</div>
+      </div>
+    </div>
+    <span class="live-dot" id="liveDot"></span>
+    <div class="icon-btn" id="btnAtualizar" title="Forçar atualização" onclick="forcarAtualizacao()">🔄</div>
+    <div class="icon-btn" id="btnFull" title="Tela cheia (desktop/TV)">⛶</div>
+    <div class="icon-btn" id="btnWake" title="Manter tela ativa">📱</div>
+    <div class="icon-btn" id="btnSom" title="Som">🔊</div>
+    <a class="icon-btn" id="btnDashboard" href="./dashboard.html" target="_blank" title="Dashboard (estatísticas do painel)">📊</a>
+    <div class="icon-btn" id="btnDark" title="Modo escuro (desktop/TV)">🌙</div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="summary-card">
+    <div class="summary-stats">
+      <div class="stat">
+        <div class="summary-count" id="countHoje">0</div>
+        <div class="summary-label">chamados hoje</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat secundario">
+        <div class="summary-count" id="countPendentes">0</div>
+        <div class="summary-label">pendentes</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat secundario">
+        <div class="summary-count" id="countEmAtendimento">0</div>
+        <div class="summary-label">em atendimento</div>
+      </div>
+    </div>
+    <div class="summary-chips">
+      <span class="chip alta"><span class="dot"></span> Alta: <span id="cAlta">0</span></span>
+      <span class="chip media"><span class="dot"></span> Média: <span id="cMedia">0</span></span>
+      <span class="chip baixa"><span class="dot"></span> Baixa: <span id="cBaixa">0</span></span>
+    </div>
+  </div>
+</div>
+
+<div class="legenda" id="legenda"></div>
+
+<div class="board" id="board">
+  <div class="coluna" data-status="Pendente">
+    <div class="coluna-head"><span class="coluna-titulo">🟡 Pendente</span><span class="coluna-count" id="colCountPendente">0</span></div>
+    <div class="coluna-grid" id="gridPendente"></div>
+  </div>
+  <div class="coluna" data-status="Em atendimento">
+    <div class="coluna-head"><span class="coluna-titulo">🔧 Em atendimento</span><span class="coluna-count" id="colCountAtendimento">0</span></div>
+    <div class="coluna-grid" id="gridAtendimento"></div>
+  </div>
+  <div class="coluna" data-status="Concluído">
+    <div class="coluna-head"><span class="coluna-titulo">✅ Concluído</span><span class="coluna-count" id="colCountConcluido">0</span></div>
+    <div class="coluna-grid" id="gridConcluido"></div>
+  </div>
+</div>
+
+<div class="empty" id="empty" style="display:none;">
+  <div class="empty-icon">🎉</div>
+  <div class="empty-title">Nenhum chamado pendente</div>
+  <div class="empty-sub">Tudo em dia. O painel continua monitorando em tempo real.</div>
+</div>
+
+<!-- Modal com todos os detalhes do chamado, aberto ao clicar em um quadrado -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModalSeFundo(event)">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<div class="footer">
+  <span id="lastUpdate">—</span>
+  <a href="dashboard.html">Ver dashboard completo →</a>
+</div>
+
+<div id="toast" role="alert"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIG — mesma fonte de dados do dashboard.html (não duplica lógica)
+   ═══════════════════════════════════════════════════════════ */
+const SHEET_ID   = '1dYU99Z_SpYrNS_nwhp4eepgqmCGXe-aJgbilhZaScgM';
+const SHEET_TAB  = 'Chamados';
+const APPS_URL   = 'https://script.google.com/macros/s/AKfycbwnIQ6tBoRjEEkPksVvOYOgurWsa8yUa_Xke8LZF12pjkJQRhGfhJS-3YS-QPRbzqsiXg/exec';
+const POLL_MS    = 8000; // frequência de checagem (dashboard usa 30s; aqui é mais rápido pois é o painel de alerta)
+
+const COL_DATA=0, COL_PROTOCOLO=1, COL_SALA=2, COL_CATEGORIA=3, COL_URGENCIA=4,
+      COL_DESCRICAO=5, COL_SOLICITANTE=6, COL_TIPO=7, COL_TELEFONE=8, COL_STATUS=9;
+
+const STORAGE_KNOWN   = 'pmc_known_protocolos';
+const STORAGE_PENDING = 'pmc_local_pending'; // evita "piscar" status logo após clicar em Atender/Concluir
+const STORAGE_EXCLUIDOS = 'pmc_excluidos_local'; // chamados removidos da tela (só neste aparelho — não apaga da planilha)
+
+let audioCtx = null;
+let soundOn  = true;
+let firstRun = true;
+let localPending = {}; // { protocolo: {status, until} }
+
+/* ── ÁUDIO (sintetizado, sem depender de arquivo mp3) ──
+   Troque SOM_ESTILO pra mudar o som de todos os alertas:
+   'campainha' → ding-dong tipo senha de banco/elevador (padrão)
+   'sirene'    → tom contínuo subindo e descendo, ~3s
+   'classico'  → o beep curto de antes, só que repetido pra durar mais
+*/
+const SOM_ESTILO = 'campainha';
+
+function tocarNota(freq, inicio, duracao, volume){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, inicio);
+  gain.gain.exponentialRampToValueAtTime(volume || 0.35, inicio + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, inicio + duracao);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(inicio);
+  osc.stop(inicio + duracao + 0.03);
+}
+
+// "Campainha" — ding-dong clássico (intervalo Si/Fá#), repete por ~3s.
+// Urgência Alta insiste mais vezes (mais ciclos) que Média/Baixa.
+function tocarCampainha(t0, urgencia){
+  const alto = 988, baixo = 740;
+  const ciclos = urgencia === 'Alta' ? 4 : 2;
+  let t = t0;
+  for(let i = 0; i < ciclos; i++){
+    tocarNota(alto, t, 0.5, 0.32);
+    tocarNota(baixo, t + 0.45, 0.6, 0.32);
+    t += 1.05;
+  }
+}
+
+// "Sirene" — tom contínuo subindo/descendo por ~3s (mais insistente)
+function tocarSirene(t0, urgencia){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  const duracao = urgencia === 'Alta' ? 3.2 : 2.2;
+  const min = 520, max = urgencia === 'Alta' ? 1100 : 900;
+  const ciclo = 0.6;
+  osc.frequency.setValueAtTime(min, t0);
+  for(let t = t0; t < t0 + duracao; t += ciclo){
+    osc.frequency.linearRampToValueAtTime(max, t + ciclo / 2);
+    osc.frequency.linearRampToValueAtTime(min, t + ciclo);
+  }
+  gain.gain.setValueAtTime(0.28, t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duracao);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0);
+  osc.stop(t0 + duracao + 0.05);
+}
+
+// "Clássico" — o beep original, repetido pra chegar perto de 3s
+function tocarClassico(t0, urgencia){
+  const pattern = urgencia === 'Alta'
+    ? [880,0,660,0,880,0,660,0,880,0,660]
+    : [660,0,880,0,660,0,880];
+  let t = t0;
+  pattern.forEach((freq) => {
+    if(freq === 0){ t += 0.09; return; }
+    tocarNota(freq, t, 0.22, 0.35);
+    t += 0.22;
+  });
+}
+
+function beep(urgencia){
+  if(!soundOn || !audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  if(SOM_ESTILO === 'sirene') tocarSirene(t0, urgencia);
+  else if(SOM_ESTILO === 'classico') tocarClassico(t0, urgencia);
+  else tocarCampainha(t0, urgencia);
+}
+
+function vibrar(urgencia){
+  if(!navigator.vibrate) return; // iOS Safari não suporta
+  navigator.vibrate(urgencia === 'Alta' ? [300,140,300,140,300] : [200,120,200]);
+}
+
+function notificar(row){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  try{
+    const n = new Notification('🔔 Novo chamado · ' + (row.sala || 'Sala não informada'), {
+      body: `${row.categoria || '—'} · Urgência ${row.urgencia || '—'}\n${(row.descricao||'').slice(0,100)}`,
+      tag: row.proto,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      requireInteraction: row.urgencia === 'Alta'
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+  }catch(e){}
+}
+
+function alertarNovo(row){
+  beep(row.urgencia);
+  vibrar(row.urgencia);
+  notificar(row);
+  showToast('🔔 Novo chamado: ' + (row.sala||'—') + ' · ' + (row.categoria||'—'));
+}
+
+/* ── OVERLAY DE ATIVAÇÃO ── */
+document.getElementById('btnUnlock').addEventListener('click', async () => {
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') await audioCtx.resume();
+    beep('Baixa'); // som de confirmação
+  }catch(e){}
+  if('Notification' in window && Notification.permission === 'default'){
+    try{ await Notification.requestPermission(); }catch(e){}
+  }
+  document.getElementById('unlock').style.display = 'none';
+  startPolling();
+  pedirWakeLock();
+});
+
+/* ── WAKE LOCK (mantém a tela acesa enquanto o painel estiver aberto) ──
+   Isso NÃO faz o alerta funcionar com o app fechado — é uma reforço pra
+   quando o app está aberto em segundo plano, evitando que o navegador
+   pause o polling porque a tela apagou/dormiu. Suporte: Chrome/Android
+   bom; iOS Safari é bem mais limitado (pode não suportar). */
+let wakeLock = null;
+let wakeLockDesejado = false;
+
+async function pedirWakeLock(){
+  if(!('wakeLock' in navigator)){
+    document.getElementById('btnWake').classList.add('off');
+    document.getElementById('btnWake').title = 'Tela ativa: não suportado neste navegador';
+    return;
+  }
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLockDesejado = true;
+    document.getElementById('btnWake').classList.remove('off');
+    document.getElementById('btnWake').title = 'Tela ativa: ligado (toque pra desligar)';
+    wakeLock.addEventListener('release', () => {
+      document.getElementById('btnWake').classList.add('off');
+    });
+  }catch(e){
+    document.getElementById('btnWake').classList.add('off');
+    console.warn('Wake Lock indisponível:', e);
+  }
+}
+
+document.getElementById('btnWake').addEventListener('click', async () => {
+  if(wakeLock && !wakeLock.released){
+    wakeLockDesejado = false;
+    await wakeLock.release();
+    document.getElementById('btnWake').classList.add('off');
+    document.getElementById('btnWake').title = 'Tela ativa: desligado (toque pra ligar)';
+  }else{
+    await pedirWakeLock();
+  }
+});
+
+// Reativa o Wake Lock automaticamente quando o app volta a ficar visível
+document.addEventListener('visibilitychange', async () => {
+  if(document.visibilityState === 'visible' && wakeLockDesejado && (!wakeLock || wakeLock.released)){
+    await pedirWakeLock();
+  }
+});
+
+document.getElementById('btnFull').addEventListener('click', async () => {
+  try{
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen();
+      document.getElementById('btnFull').classList.remove('off');
+    }else{
+      await document.exitFullscreen();
+    }
+  }catch(e){ showToast('⚠️ Tela cheia não suportada neste navegador'); }
+});
+document.addEventListener('fullscreenchange', () => {
+  document.getElementById('btnFull').classList.toggle('off', !document.fullscreenElement);
+});
+
+document.getElementById('btnSom').addEventListener('click', (e) => {
+  soundOn = !soundOn;
+  e.currentTarget.textContent = soundOn ? '🔊' : '🔇';
+  e.currentTarget.classList.toggle('off', !soundOn);
+});
+
+/* ── MODO ESCURO (desktop/TV) — só troca classe visual, não mexe em mais nada ── */
+const DARK_MODE_KEY = 'pmc_dark_mode';
+function aplicarDarkMode(ativo){
+  document.body.classList.toggle('dark-mode', ativo);
+  const btn = document.getElementById('btnDark');
+  if(btn) btn.textContent = ativo ? '☀️' : '🌙';
+}
+(function initDarkMode(){
+  let salvo = false;
+  try{ salvo = localStorage.getItem(DARK_MODE_KEY) === '1'; }catch(e){}
+  aplicarDarkMode(salvo);
+})();
+document.getElementById('btnDark')?.addEventListener('click', () => {
+  const ativo = !document.body.classList.contains('dark-mode');
+  aplicarDarkMode(ativo);
+  try{ localStorage.setItem(DARK_MODE_KEY, ativo ? '1' : '0'); }catch(e){}
+});
+
+/* ── PENDÊNCIA LOCAL (após clicar Atender/Concluir, ignora status antigo por alguns segundos) ── */
+function loadLocalPending(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(STORAGE_PENDING) || '{}');
+    const now = Date.now();
+    Object.keys(raw).forEach(k => { if(raw[k].until < now) delete raw[k]; });
+    return raw;
+  }catch(e){ return {}; }
+}
+function saveLocalPending(p){ try{ localStorage.setItem(STORAGE_PENDING, JSON.stringify(p)); }catch(e){} }
+
+function loadKnown(){
+  try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_KNOWN) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveKnown(set){
+  try{
+    const arr = [...set].slice(-800); // limita crescimento
+    localStorage.setItem(STORAGE_KNOWN, JSON.stringify(arr));
+  }catch(e){}
+}
+
+/* ── EXCLUSÃO LOCAL (some só desta tela; não apaga nem altera a planilha) ── */
+function loadExcluidos(){
+  try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_EXCLUIDOS) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveExcluidos(set){
+  try{ localStorage.setItem(STORAGE_EXCLUIDOS, JSON.stringify([...set].slice(-500))); }catch(e){}
+}
+function excluirCard(proto){
+  const ok = confirm('Tem certeza que deseja excluir o chamado ' + proto + ' desta tela?\n\nIsso só remove a visualização neste aparelho — o registro continua no dashboard e no histórico.');
+  if(!ok) return;
+  const set = loadExcluidos();
+  set.add(proto);
+  saveExcluidos(set);
+  tick();
+}
+
+/* ── PARSE DA PLANILHA (gviz) — mesma fonte do dashboard.html ── */
+function normalizeStatus(raw){
+  const s = (raw||'').trim().toLowerCase();
+  if(s.includes('conclu')) return 'Concluído';
+  if(s.includes('atend'))  return 'Em atendimento';
+  return 'Pendente';
+}
+
+function makeProto(index, dateStr){
+  let year = new Date().getFullYear();
+  if(dateStr){ const m = dateStr.match(/\d{1,2}\/\d{1,2}\/(\d{4})/); if(m) year = m[1]; }
+  return 'CAP-' + year + '-' + String(index+1).padStart(4,'0');
+}
+
+function parseDataHora(str){
+  if(!str) return null;
+  const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(!m) return null;
+  return new Date(+m[3], +m[2]-1, +m[1], +(m[4]||0), +(m[5]||0), +(m[6]||0));
+}
+
+function isMesmoDia(a, b){
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+/* O Google gviz manda datas cruas como texto "Date(ano,mes,dia,h,min,seg)".
+   Usar esse valor (em vez do texto já formatado) evita perder a hora quando
+   a COLUNA da planilha está formatada só como "Data" (sem hora) — nesse caso
+   o texto formatado (c.f) vem sem hora, mas o valor cru (c.v) normalmente
+   ainda carrega o horário completo. */
+function parseGvizDate(raw){
+  if(raw === null || raw === undefined) return null;
+  const m = String(raw).match(/^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
+  if(!m) return null;
+  return new Date(+m[1], +m[2], +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0));
+}
+
+async function fetchRows(){
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_TAB)}&tq=select%20*&headers=1&_=${Date.now()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  const text = await res.text();
+  const json = JSON.parse(text.substring(text.indexOf('(')+1, text.lastIndexOf(')')));
+  const rows = json.table.rows || [];
+  const pending = loadLocalPending();
+
+  return rows.map((r, i) => {
+    const get = (idx) => {
+      const c = r.c && r.c[idx];
+      if(!c) return '';
+      if(c.f !== undefined && c.f !== null) return String(c.f).trim();
+      if(c.v !== undefined && c.v !== null) return String(c.v).trim();
+      return '';
+    };
+    const dataStr = get(COL_DATA);
+    const protoSheet = get(COL_PROTOCOLO);
+    const proto = protoSheet || makeProto(i, dataStr);
+    let status = pending[proto] ? pending[proto].status : normalizeStatus(get(COL_STATUS));
+
+    // Hora: 1) tenta o valor cru do Google (preserva a hora mesmo se a coluna
+    // estiver formatada só como Data), 2) senão tenta o texto já formatado.
+    const cellData = r.c && r.c[COL_DATA];
+    const dataObjCalc = (cellData && parseGvizDate(cellData.v)) || parseDataHora(dataStr);
+
+    return {
+      proto,
+      data: dataStr,
+      dataObj: dataObjCalc,
+      sala: get(COL_SALA),
+      categoria: get(COL_CATEGORIA),
+      urgencia: get(COL_URGENCIA) || 'Baixa',
+      descricao: get(COL_DESCRICAO),
+      solicitante: get(COL_SOLICITANTE),
+      tipo: get(COL_TIPO),
+      telefone: get(COL_TELEFONE),
+      status
+    };
+  });
+}
+
+/* ── AÇÕES (Atender / Concluir) — mesmo endpoint do dashboard.html ── */
+function atualizarStatus(proto, novoStatus, btnEl){
+  if(btnEl) btnEl.classList.add('loading');
+  const pending = loadLocalPending();
+  pending[proto] = { status: novoStatus, until: Date.now() + 15000 };
+  saveLocalPending(pending);
+
+  fetch(APPS_URL + '?action=updateStatus&protocolo=' + encodeURIComponent(proto) + '&status=' + encodeURIComponent(novoStatus))
+    .then(() => showToast('✓ ' + proto + ' → ' + novoStatus))
+    .catch(() => showToast('⚠️ Falha ao atualizar ' + proto + ' (tentando novamente no próximo ciclo)'))
+    .finally(() => { tick(); });
+}
+
+/* ── RENDER ── */
+function tempoDecorridoLabel(dataObj){
+  if(!dataObj) return { label:'—', atrasado:false };
+  const diffMin = Math.floor((Date.now() - dataObj.getTime()) / 60000);
+  if(diffMin < 1) return { label:'agora', atrasado:false };
+  if(diffMin < 60) return { label: 'há ' + diffMin + ' min', atrasado: diffMin >= 30 };
+  const h = Math.floor(diffMin/60);
+  return { label: 'há ' + h + 'h' + (diffMin%60 ? (diffMin%60)+'min' : ''), atrasado:true };
+}
+
+function telWa(tel){
+  const d = (tel||'').replace(/\D/g,'');
+  if(!d || d.length < 8) return null;
+  if(d.startsWith('55') && d.length >= 12) return d;
+  if(d.length === 10 || d.length === 11) return '55'+d;
+  return null;
+}
+
+/* Mensagem automática enviada ao solicitante pelo botão 💬 do card */
+function mensagemConfirmacaoZap(row, salaFmt){
+  const msg = '*CAP Digital · FMC*\n\n' +
+    '✅ Solicitação registrada com sucesso.\n' +
+    'A equipe CAP já foi notificada e irá atender em breve.\n\n' +
+    '🎫 Protocolo: *' + row.proto + '*\n' +
+    '📍 Local: ' + salaFmt;
+  return encodeURIComponent(msg);
+}
+
+function escHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function horaFmt(dataObj, fallback){
+  if(!dataObj) return escHtml(fallback || '—');
+  const p = n => String(n).padStart(2,'0');
+  return p(dataObj.getDate())+'/'+p(dataObj.getMonth()+1)+'/'+dataObj.getFullYear()+', '+p(dataObj.getHours())+':'+p(dataObj.getMinutes())+':'+p(dataObj.getSeconds());
+}
+
+function cardHTML(row, isNovo){
+  const t = tempoDecorridoLabel(row.dataObj);
+  const wa = telWa(row.telefone);
+  const salaFmt = (row.sala||'—').replace(/^(\d+)$/, 'Sala $1');
+  const emAtendimento = row.status === 'Em atendimento';
+  const concluido = row.status === 'Concluído';
+  const waMsg = mensagemConfirmacaoZap(row, salaFmt);
+
+  // Botão único que evolui conforme o status:
+  // Pendente -> "🔧 Assumir" (verde) muda status pra "Em atendimento"
+  // Em atendimento -> "✅ Concluir" (verde) muda status pra "Concluído"
+  // Concluído -> sem botão de ação, só o selo verde
+  let botaoAcao;
+  if(concluido){
+    botaoAcao = `<span class="btn btn-feito" tabindex="-1">✅ Concluído</span>`;
+  }else if(emAtendimento){
+    botaoAcao = `<button class="btn btn-atender" onclick="atualizarStatus('${row.proto}','Concluído', this)">✅ Concluir</button>`;
+  }else{
+    botaoAcao = `<button class="btn btn-atender" onclick="atualizarStatus('${row.proto}','Em atendimento', this)">🔧 Assumir</button>`;
+  }
+
+  const statusClasse = concluido ? 'status-concluido' : emAtendimento ? 'status-atendimento' : 'status-pendente';
+
+  return `
+    <div class="card urg-${row.urgencia} ${isNovo ? 'novo' : ''}" data-proto="${row.proto}">
+      <div class="card-top">
+        <span class="proto">CAP-${escHtml(row.proto.replace(/^CAP-/,''))}</span>
+        <span class="tempo ${t.atrasado?'atrasado':''}">${t.label}</span>
+      </div>
+      <div class="sala-row">
+        <span class="sala">${escHtml(salaFmt)}</span>
+        <span class="badge-urg ${row.urgencia}">${escHtml(row.urgencia)}</span>
+      </div>
+
+      <div class="info-rows">
+        <div class="info-row"><span class="ico">🔧</span><span class="lbl">Categoria:</span><span class="val">${escHtml(row.categoria) || 'Não informada'}</span></div>
+        ${row.descricao ? `<div class="info-row"><span class="ico">📝</span><span class="lbl">Descrição:</span><span class="val">${escHtml(row.descricao)}</span></div>` : ''}
+        <div class="info-row"><span class="ico">👤</span><span class="lbl">Solicitante:</span><span class="val">${escHtml(row.solicitante) || 'Não informado'}</span></div>
+        ${row.tipo ? `<div class="info-row"><span class="ico">🏷️</span><span class="lbl">Tipo:</span><span class="val">${escHtml(row.tipo)}</span></div>` : ''}
+        ${row.telefone ? `<div class="info-row"><span class="ico">📱</span><span class="lbl">Contato:</span>${wa ? `<a class="val" href="https://wa.me/${wa}" target="_blank">${escHtml(row.telefone)}</a>` : `<span class="val">${escHtml(row.telefone)}</span>`}</div>` : ''}
+        <div class="info-row"><span class="ico">🕐</span><span class="lbl">Hora:</span><span class="val">${horaFmt(row.dataObj, row.data)}</span></div>
+        <div class="info-row"><span class="ico">📌</span><span class="lbl">Status:</span><span class="status-pill ${statusClasse}">${escHtml(row.status)}</span></div>
+      </div>
+
+      <div class="actions">
+        ${botaoAcao}
+        ${wa ? `<a class="btn btn-call" href="https://wa.me/${wa}?text=${waMsg}" target="_blank" title="Enviar confirmação por WhatsApp">💬</a>` : ''}
+        ${row.telefone ? `<a class="btn btn-call" href="tel:${row.telefone.replace(/\D/g,'')}" title="Ligar">📞</a>` : ''}
+      </div>
+      <button class="btn-excluir" onclick="excluirCard('${row.proto}')">🗑️ excluir desta tela</button>
+    </div>`;
+}
+
+function render(rows, novosProtos){
+  const excluidos = loadExcluidos();
+
+  // Contagem geral do dia: todos os chamados de hoje, independente do status
+  // ou de terem sido excluídos desta tela (é uma contagem histórica do dia).
+  const hoje = new Date();
+  const chamadosHoje = rows.filter(r => r.dataObj && isMesmoDia(r.dataObj, hoje)).length;
+  document.getElementById('countHoje').textContent = chamadosHoje;
+
+  const pendentes = rows
+    .filter(r => !excluidos.has(r.proto))
+    .sort((a,b) => {
+      // Ordem cronológica decrescente: chamado mais recente aparece no topo.
+      // Chamados sem data reconhecida ficam por último (não têm como ser ordenados).
+      const ta = a.dataObj ? a.dataObj.getTime() : -Infinity;
+      const tb = b.dataObj ? b.dataObj.getTime() : -Infinity;
+      return tb - ta;
+    });
+
+  const ativos = pendentes.filter(r => r.status !== 'Concluído');
+  document.getElementById('countPendentes').textContent = pendentes.filter(r=>r.status==='Pendente').length;
+  const emAtendimentoCount = pendentes.filter(r=>r.status==='Em atendimento').length;
+  document.getElementById('countEmAtendimento').textContent = emAtendimentoCount;
+  document.getElementById('cAlta').textContent  = ativos.filter(r=>r.urgencia==='Alta').length;
+  document.getElementById('cMedia').textContent = ativos.filter(r=>r.urgencia==='Média').length;
+  document.getElementById('cBaixa').textContent = ativos.filter(r=>r.urgencia==='Baixa').length;
+
+  const lista = document.getElementById('lista');
+  const empty = document.getElementById('empty');
+
+  if(pendentes.length === 0){
+    lista.innerHTML = '';
+    empty.style.display = 'block';
+  }else{
+    empty.style.display = 'none';
+    lista.innerHTML = pendentes.map(r => cardHTML(r, novosProtos.has(r.proto))).join('');
+  }
+
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    'atualizado ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.classList.remove('show'), 3500);
+}
+
+/* ── CICLO PRINCIPAL ── */
+async function tick(){
+  const dot = document.getElementById('liveDot');
+  try{
+    const rows = await fetchRows();
+    const known = loadKnown();
+    const novos = new Set();
+
+    rows.forEach(r => {
+      if(!known.has(r.proto)){
+        known.add(r.proto);
+        if(!firstRun && r.status === 'Pendente'){
+          novos.add(r.proto);
+        }
+      }
+    });
+
+    render(rows, novos);
+    saveKnown(known);
+
+    if(!firstRun){
+      novos.forEach(proto => {
+        const row = rows.find(r => r.proto === proto);
+        if(row) alertarNovo(row);
+      });
+    }
+    firstRun = false;
+    dot.style.background = '#5ce0a0';
+  }catch(e){
+    dot.style.background = '#dc2626';
+    console.warn('Erro ao buscar chamados:', e);
+  }
+}
+
+let pollTimer = null;
+function startPolling(){
+  tick();
+  pollTimer = setInterval(tick, POLL_MS);
+}
+
+/* Retoma o ciclo rápido quando a tela volta a ficar visível */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && pollTimer){ tick(); }
+});
+
+/* ── SERVICE WORKER (instalação como app / PWA) ── */
+let swReg = null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw-pmc.js').then(reg => {
+      swReg = reg;
+      reg.update();
+      reg.addEventListener('updatefound', () => {
+        const nova = reg.installing;
+        nova.addEventListener('statechange', () => {
+          if(nova.state === 'activated'){ location.reload(); }
+        });
+      });
+    }).catch(err => console.warn('SW erro:', err));
+  });
+
+  // Reforço: aparelhos que ficam com o app aberto/em 2º plano por muito
+  // tempo (sem recarregar a página) podem não perceber sozinhos que existe
+  // uma versão nova publicada. Checa de novo a cada 5 minutos e sempre que
+  // o app volta a ficar visível.
+  setInterval(() => { if(swReg) swReg.update(); }, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && swReg) swReg.update();
+  });
+}
+
+/* Botão manual — força checar atualização e recarregar, útil quando um
+   aparelho parece "atrasado" em relação aos outros. */
+function forcarAtualizacao(){
+  if(swReg){ swReg.update(); }
+  location.reload();
+}
+</script>
+
+<!-- ── FIREBASE CLOUD MESSAGING (notificações push, mesmo com o painel fechado) ── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-messaging.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_HJfDMyPEYewfbGgQIJ90LmUvYK36OKE",
+    authDomain: "pmc-fmc-push.firebaseapp.com",
+    projectId: "pmc-fmc-push",
+    storageBucket: "pmc-fmc-push.firebasestorage.app",
+    messagingSenderId: "1020191800841",
+    appId: "1:1020191800841:web:ffa56e8854c6c72fad82d8"
+  };
+
+  const VAPID_KEY = "BIvsGrKjODynNiQza6qUvE6F4B4g-ZC-yB_3SXoN4XXYGKnOPbIZQ6S4PYiMPb4f_N9U5Nhy3vjWyb2vpNhmF2c";
+
+  // mesmo Web App do Apps Script já usado pelo dashboard e por este painel
+  const APPS_URL_PUSH =
+    'https://script.google.com/macros/s/AKfycbwnIQ6tBoRjEEkPksVvOYOgurWsa8yUa_Xke8LZF12pjkJQRhGfhJS-3YS-QPRbzqsiXg/exec';
+
+  const app = initializeApp(firebaseConfig);
+  const messaging = getMessaging(app);
+
+  async function ativarPushPMC() {
+    try {
+      if (!('serviceWorker' in navigator)) return;
+
+      // usa o mesmo sw-pmc.js já registrado pelo script principal do painel
+      const registration = await navigator.serviceWorker.ready;
+
+      if (Notification.permission !== 'granted') return; // o botão já pediu permissão antes desta função rodar
+
+      const token = await getToken(messaging, {
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration
+      });
+
+      if (!token) return;
+
+      let dispositivo = localStorage.getItem('pmc_dispositivo_nome');
+      if (!dispositivo) {
+        dispositivo = prompt('Nome deste painel/dispositivo (ex: PMC - Sala CAP, PMC - Recepção):', 'PMC - Painel principal') || 'PMC sem nome';
+        localStorage.setItem('pmc_dispositivo_nome', dispositivo);
+      }
+
+      await fetch(APPS_URL_PUSH +
+        '?action=salvarTokenPush&token=' + encodeURIComponent(token) +
+        '&dispositivo=' + encodeURIComponent(dispositivo));
+
+      localStorage.setItem('pmc_push_token', token);
+      console.log('[PMC] Push ativado para:', dispositivo);
+    } catch (erro) {
+      console.warn('[PMC] Erro ao ativar push:', erro);
+      // não bloqueia o resto do painel — o monitoramento por polling continua funcionando normalmente
+    }
+  }
+
+  // dispara junto do clique que já existe no botão "Ativar monitoramento"
+  // (não substitui o handler original, só soma a este)
+  document.getElementById('btnUnlock')?.addEventListener('click', () => {
+    setTimeout(ativarPushPMC, 300); // pequeno atraso pra rodar depois do requestPermission original
+  });
+
+  // se a permissão já tiver sido concedida numa sessão anterior, garante
+  // que o token existe mesmo sem clicar de novo no botão
+  if ('Notification' in window && Notification.permission === 'granted') {
+    navigator.serviceWorker?.ready.then(() => ativarPushPMC());
+  }
+
+  // notificação recebida com o painel ABERTO em primeiro plano
+  onMessage(messaging, (payload) => {
+    console.log('[PMC] Chamado novo via push (painel aberto):', payload);
+    // o polling normal do painel (a cada 8s) já deve pegar esse chamado sozinho;
+    // isto aqui é só um reforço/log, não duplica alerta sonoro.
+  });
+</script>
+</body>
+</html>
